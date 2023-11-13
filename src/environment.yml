@@ -1,0 +1,10 @@
+name: stagetool-app
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip:
+      - flask==3.0
+      - jsonschema==4.19
+      - pillow==10.1
+      - python-dotenv==1.0
