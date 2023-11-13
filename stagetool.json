@@ -1,0 +1,205 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "StageTool REST API",
+    "description": "Provides a REST API that accepts valid images and makes predictions",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/task": {
+      "get": {
+        "summary": "Get task data",
+        "description": "Get the status of a previously submitted task",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a Task object if the task exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload images for prediction",
+        "description": "Post request description",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Normal response when task is created. Returns a Task object, whose status may still be pending. You should regularly check in 5 second intervals for any change in the status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/images": {
+      "get": {
+        "summary": "Get image data",
+        "description": "Get an image from a previously submitted task",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "description": "The filename of the image to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the image if it exists.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/tiff": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/visualizations": {
+      "get": {
+        "summary": "Get visualization data",
+        "description": "Get the visualization data for a previously submitted task",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "description": "The filename of the visualization to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the visualization if it exists.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/tiff": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "completed", "failed"]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "image_filenames": {
+                "type": "array"
+              },
+              "visualization_filenames": {
+                "type": "array"
+              },
+              "results": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
