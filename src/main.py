@@ -20,7 +20,7 @@ def get_task():
     task_id = request.args.get("id")
 
     try:
-        task = Task(id=task_id)
+        task = Task(id=task_id, images=None)
         return jsonify(task.data()), 200
     except TaskNotFound:
         return jsonify({"error": "Task not found"}), 404
@@ -35,8 +35,7 @@ def post_task():
         images = request.files.getlist("images")
 
         task = Task(images=images)
-        if app.config["ENV"] != "development":
-            task.execute()
+        task.execute()
 
         return jsonify(task.data()), 201
     except TaskCreationError:
