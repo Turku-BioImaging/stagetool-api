@@ -3,6 +3,7 @@ from flask import Flask, abort, jsonify, request, send_file
 from dotenv import load_dotenv
 import os
 import mimetypes
+import io
 
 load_dotenv()
 app = Flask(__name__)
@@ -56,7 +57,11 @@ def get_image():
     image_path = os.path.join(DATA_DIR, task_id, "images", filename)
 
     if os.path.exists(image_path):
-        return send_file(image_path, mimetype=mimetypes.guess_type(image_path)[0])
+        with open(image_path, "rb") as img:
+            img_data = img.read()
+        return send_file(
+            io.BytesIO(img_data), mimetype=mimetypes.guess_type(image_path)[0]
+        )
     else:
         abort(404, description="Image not found.")
 
@@ -72,14 +77,18 @@ def get_visualization():
     vis_path = os.path.join(DATA_DIR, task_id, "visualizations", filename)
 
     if os.path.exists(vis_path):
-        return send_file(vis_path, mimetype=mimetypes.guess_type(vis_path)[0])
+        with open(vis_path, "rb") as vis:
+            vis_data = vis.read()
+        return send_file(
+            io.BytesIO(vis_data), mimetype=mimetypes.guess_type(vis_path)[0]
+        )
     else:
         abort(404, description="Visualization not found.")
 
 
 if __name__ == "__main__":
     if __name__ == "__main__":
-        if app.config["ENV"] == "development":
+        if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
             app.run(debug=True)
         else:
             app.run()
