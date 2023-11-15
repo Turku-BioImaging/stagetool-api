@@ -1,4 +1,4 @@
-# stagetool-app
+# StageTool API
 
 ## Dev / Testing
 Create a `.env` inside `./src` with the following keys
