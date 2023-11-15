@@ -6,10 +6,12 @@ import mimetypes
 
 load_dotenv()
 app = Flask(__name__)
+
+
 app.config["ENV"] = os.getenv("ENV", "development")
 
 
-if app.config["ENV"] == "development":
+if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "data-dev")
 else:
     DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -35,7 +37,8 @@ def post_task():
         images = request.files.getlist("images")
 
         task = Task(images=images)
-        task.execute()
+        if not os.environ["ENV"] == "testing":
+            task.execute()
 
         return jsonify(task.data()), 201
     except TaskCreationError:

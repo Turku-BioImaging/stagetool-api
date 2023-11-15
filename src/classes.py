@@ -94,7 +94,10 @@ class Task:
         command = f"docker run --rm -v {input_vol_bind} -v {output_vol_bind} {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VERSION}"
 
         # Start the command as a background process
-        process = subprocess.Popen(command, shell=True)
+        with open(os.devnull, "w") as devnull:
+            process = subprocess.Popen(
+                command, shell=True, stdout=devnull, stderr=devnull
+            )
         print("Process started with PID:", process.pid)
 
     def status(self) -> str:
@@ -125,11 +128,25 @@ class Task:
             dict: A dictionary containing information about the task.
         """
         img_fnames = sorted(glob(os.path.join(self.task_dir, "images", "*")))
+        vis_fnames = glob(os.path.join(self.task_dir, "visualizations", "*"))
+
+        # TEMPORARY:
+        #  - Remove pred_ prefix from visualization filenames
+        #  - Consider implementing this at the Docker level
+        for p in vis_fnames:
+            fname = os.path.basename(p)
+            if fname.startswith("pred_"):
+                new_fname = fname.replace("pred_", "")
+                os.rename(
+                    os.path.join(self.task_dir, "visualizations", fname),
+                    os.path.join(self.task_dir, "visualizations", new_fname),
+                )
+
         vis_fnames = sorted(glob(os.path.join(self.task_dir, "visualizations", "*")))
         result_fnames = sorted(glob(os.path.join(self.task_dir, "results", "*")))
 
-        # check if a dir has any *.pkl files
-        # if so, move all pkl files into the results dir
+        # Check if a dir has any *.pkl files
+        # Move all pkl files into the results dir
         pkl_paths = glob(os.path.join(self.task_dir, "visualizations", "*.pkl"))
         [
             shutil.move(p, os.path.join(self.task_dir, "results", os.path.basename(p)))
