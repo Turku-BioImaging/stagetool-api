@@ -8,7 +8,7 @@ from jsonschema import validate
 from werkzeug.datastructures import FileStorage
 import json
 from dotenv import load_dotenv
-from shutil import rmtree
+from shutil import rmtree, copy
 
 # load_dotenv()
 os.environ["ENV"] = "testing"
@@ -98,12 +98,55 @@ class TestGetImages(TestCase):
     def setUp(self) -> None:
         img_dir = os.path.join(os.path.dirname(__file__), "images")
 
-        with open(os.path.join(img_dir, "01.png"), "rb") as img1, open(
-            os.path.join(img_dir, "02.png"), "rb"
-        ) as img2:
-            images = [
-                FileStorage(img1, filename="01.png"),
-                FileStorage(img2, filename="02.png"),
-            ]
+        with open(os.path.join(img_dir, "02.png"), "rb") as img:
+            images = [FileStorage(img, filename="02.png")]
 
-        self.task = Task(images=images)
+            self.task = Task(images=images)
+
+    def test_get_images(self):
+        with app.test_client() as client:
+            # task id is not provided
+            response = client.get("/images?filename=02.png")
+            assert response.status_code == 400
+
+            # task id does not exist
+            response = client.get("/images?task_id=123&filename=02.png")
+            assert response.status_code == 404
+
+            # download existing image
+            response = client.get(f"/images?task_id={self.task.id}&filename=02.png")
+            assert response.status_code == 200
+            assert response.headers["Content-Type"] == "image/png"
+
+
+class TestGetVisualizations(TestCase):
+    def setUp(self) -> None:
+        img_dir = os.path.join(os.path.dirname(__file__), "images")
+        with open(os.path.join(img_dir, "02.png"), "rb") as img:
+            images = [FileStorage(img, filename="02.png")]
+
+            self.task = Task(images=images)
+
+        task_dir = os.path.join(DATA_DIR, self.task.id)
+        copy(os.path.join(img_dir, "02.png"), os.path.join(task_dir, "visualizations"))
+
+    def test_get_visualizations(self):
+        with app.test_client() as client:
+            # task id is not provided
+            response = client.get("/visualizations?filename=02.png")
+            assert response.status_code == 400
+
+            # vis filename is not provided
+            response = client.get("/visualizations?task_id=123")
+            assert response.status_code == 400
+
+            # task id does not exist
+            response = client.get('/visualizations?task_id=123&filename="02.png"')
+            assert response.status_code == 404
+
+            # download existing vis image
+            response = client.get(
+                f"/visualizations?task_id={self.task.id}&filename=02.png"
+            )
+            assert response.status_code == 200
+            assert response.headers["Content-Type"] == "image/png"
