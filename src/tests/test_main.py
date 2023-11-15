@@ -10,10 +10,11 @@ import json
 from dotenv import load_dotenv
 from shutil import rmtree
 
-load_dotenv()
+# load_dotenv()
+os.environ["ENV"] = "testing"
 env = os.getenv("ENV", "development")
 
-if env == "development":
+if env == "testing":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data-dev")
 else:
     DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
