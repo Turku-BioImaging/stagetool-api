@@ -170,6 +170,38 @@
           }
         }
       }
+    },
+    "/results": {
+      "get": {
+        "summary": "Get results data",
+        "description": "",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the results if they exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
