@@ -3,14 +3,15 @@ import os
 import random
 from glob import glob
 from unittest import TestCase
-from classes import Status, Task, TaskNotFoundError
+
+from classes import Status, Task
 
 # from dotenv import load_dotenv
 from jsonschema import validate
 from main import app
 from werkzeug.datastructures import FileStorage
-from .factories import TaskFactory
 
+from .factories import TaskFactory
 
 os.environ["ENV"] = "testing"
 env = os.getenv("ENV")
@@ -140,18 +141,14 @@ class TestVisualizations(TestCase):
 
 
 # class TestResults(TestCase):
-
 #     def setUp(self) -> None:
+#         self.task = TaskFactory.create_task(num_images=1, status=Status.COMPLETED.name)
 
-#         img_dir = os.path.join(os.path.dirname(__file__), "images")
-
-#         with open(os.path.join(img_dir, "05.png"), "rb") as img:
-#             images = [FileStorage(img, filename="05.png")]
-#             self.task = Task(images=images)
+#     def tearDown(self) -> None:
+#         self.task.destroy()
 
 #     def test_get_results(self):
 #         with app.test_client() as client:
-
 #             # task id not provided
-#             response = client.get('/results/csv?task_id=1234')
+#             response = client.get("/results/csv?task_id=1234")
 #             assert response.status_code == 400
