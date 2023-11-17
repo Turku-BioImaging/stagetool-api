@@ -1,8 +1,9 @@
-name: stagetool-app
+name: stagetool-api
 channels:
   - conda-forge
 dependencies:
   - python=3.9
+  - pip
   - pip:
       - flask==3.0
       - jsonschema==4.19
