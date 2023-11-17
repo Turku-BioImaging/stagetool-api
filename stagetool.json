@@ -202,6 +202,38 @@
           }
         }
       }
+    },
+    "/results/csv": {
+      "get": {
+        "summary": "Get results data as CSV",
+        "description": "",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task for which to retrieve CSV data.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the CSV data file if it exists.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
