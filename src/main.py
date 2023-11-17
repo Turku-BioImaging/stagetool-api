@@ -74,9 +74,9 @@ def get_visualization():
     if not task_id or not filename:
         abort(400, description="Required query parameters are missing.")
 
-    vis_path = os.path.join(DATA_DIR, task_id, "visualizations", filename)
-
-    if os.path.exists(vis_path):
+    try:
+        task = Task(id=task_id)
+        vis_path = os.path.join(DATA_DIR, task.id, "visualizations", filename)
         with open(vis_path, "rb") as vis:
             vis_data = vis.read()
         return send_file(
