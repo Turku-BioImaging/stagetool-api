@@ -1,0 +1,5 @@
+{
+    "yaml.schemas": {
+        "swaggerviewer:openapi": "file:///home/junelsolis/idat/stagetool-app/stagetool.yaml"
+    }
+}
