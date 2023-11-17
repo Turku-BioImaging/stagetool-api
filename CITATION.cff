@@ -1,0 +1,26 @@
+cff-version: 1.1.0
+message: If you use this software, please cite it as below.
+authors:
+  - family-names: "Meikar"
+    given-names: "O"
+  - family-names: "Majoral"
+    given-names: "D"
+  - family-names: "Heikkinen"
+    given-names: "O"
+  - family-names: "Valkama"
+    given-names: "E"
+  - family-names: "Leskinen"
+    given-names: "S"
+  - family-names: "Rebane"
+    given-names: "A"
+  - family-names: "Ruusuvuori"
+    given-names: "P"
+  - family-names: "Toppari"
+    given-names: "J"
+  - family-names: "Mäkelä"
+    given-names: "JA"
+  - family-names: "Kotaja"
+    given-names: "N"
+title: "STAGETOOL, a Novel Automated Approach for Mouse Testis Histological Analysis"
+doi: 10.1210/endocr/bqac202
+date-released: 2022-12-19
