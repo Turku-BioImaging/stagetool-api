@@ -1,20 +1,22 @@
-import os
-from main import app
-from classes import TaskNotFound, Task
-from unittest.mock import patch
-from unittest import TestCase
-from uuid import uuid4
-from jsonschema import validate
-from werkzeug.datastructures import FileStorage
 import json
-from dotenv import load_dotenv
-from shutil import rmtree, copy
+import os
+import random
+from glob import glob
+from unittest import TestCase
 
-# load_dotenv()
+from classes import Status, Task
+
+# from dotenv import load_dotenv
+from jsonschema import validate
+from main import app
+from werkzeug.datastructures import FileStorage
+
+from .factories import TaskFactory
+
 os.environ["ENV"] = "testing"
-env = os.getenv("ENV", "development")
+env = os.getenv("ENV")
 
-if env == "testing":
+if env == "testing" or env == "development":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data-dev")
 else:
     DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -27,43 +29,27 @@ with open(os.path.join(os.path.dirname(__file__), "..", "..", "stagetool.json"))
 
 class TestGetTask(TestCase):
     def setUp(self) -> None:
-        self.task_data = {
-            "id": str(uuid4().hex),
-            "status": "pending",
-            "image_filenames": ["01.png", "02.png"],
-            "visualization_filenames": ["01.png", "02.png"],
-            "results": ["results.pkl"],
-        }
+        self.task = TaskFactory.create_task(num_images=2)
 
-        return super().setUp()
+    def tearDown(self) -> None:
+        self.task.destroy()
 
     def test_get_task(self):
         with app.test_client() as client:
             # Test retrieving an existing task
-            with patch("main.Task") as mock_task:
-                mock_task.return_value.data.return_value = self.task_data
-                response = client.get(f"/task?id={self.task_data['id']}")
-                assert response.status_code == 200
-                assert response.json == self.task_data
-                assert validate(response.json, task_schema) is None
+            response = client.get(f"/task?id={self.task.id}")
+            assert response.status_code == 200
+            assert validate(response.json, task_schema) is None
 
             # Test case where task is not found
-            with patch("main.Task") as mock_task:
-                mock_task.side_effect = TaskNotFound
-                response = client.get(f"/task?id={str(uuid4().hex)}")
-                assert response.status_code == 404
-                assert response.json == {"error": "Task not found"}
+            response = client.get("/task?id=1234")
+            assert response.status_code == 404
 
 
 class TestPostTask(TestCase):
     def tearDown(self) -> None:
-        # delete all dirs in DATA_DIR
-        for dir in os.listdir(DATA_DIR):
-            dir_path = os.path.join(DATA_DIR, dir)
-            if os.path.isdir(dir_path):
-                rmtree(dir_path)
-
-        return super().tearDown()
+        task = Task(id=self.task_id)
+        task.destroy()
 
     def test_post_task(self):
         with app.test_client() as client:
@@ -93,15 +79,15 @@ class TestPostTask(TestCase):
             assert len(response.json["image_filenames"]) == 2
             assert len(response.json["visualization_filenames"]) == 0
 
+            self.task_id = response.json["id"]
+
 
 class TestGetImages(TestCase):
     def setUp(self) -> None:
-        img_dir = os.path.join(os.path.dirname(__file__), "images")
+        self.task = TaskFactory.create_task(num_images=3)
 
-        with open(os.path.join(img_dir, "02.png"), "rb") as img:
-            images = [FileStorage(img, filename="02.png")]
-
-            self.task = Task(images=images)
+    def tearDown(self) -> None:
+        self.task.destroy()
 
     def test_get_images(self):
         with app.test_client() as client:
@@ -114,26 +100,28 @@ class TestGetImages(TestCase):
             assert response.status_code == 404
 
             # download existing image
-            response = client.get(f"/images?task_id={self.task.id}&filename=02.png")
+            img_fnames = [
+                os.path.basename(i)
+                for i in glob(os.path.join(DATA_DIR, self.task.id, "images", "*"))
+            ]
+            response = client.get(
+                f"/images?task_id={self.task.id}&filename={random.choice(img_fnames)}"
+            )
             assert response.status_code == 200
             assert response.headers["Content-Type"] == "image/png"
 
 
-class TestGetVisualizations(TestCase):
+class TestVisualizations(TestCase):
     def setUp(self) -> None:
-        img_dir = os.path.join(os.path.dirname(__file__), "images")
-        with open(os.path.join(img_dir, "02.png"), "rb") as img:
-            images = [FileStorage(img, filename="02.png")]
+        self.task = TaskFactory.create_task(num_images=2, status=Status.COMPLETED.name)
 
-            self.task = Task(images=images)
-
-        task_dir = os.path.join(DATA_DIR, self.task.id)
-        copy(os.path.join(img_dir, "02.png"), os.path.join(task_dir, "visualizations"))
+    def tearDown(self) -> None:
+        self.task.destroy()
 
     def test_get_visualizations(self):
         with app.test_client() as client:
             # task id is not provided
-            response = client.get("/visualizations?filename=02.png")
+            response = client.get("/visualizations?filename=04.png")
             assert response.status_code == 400
 
             # vis filename is not provided
@@ -141,12 +129,26 @@ class TestGetVisualizations(TestCase):
             assert response.status_code == 400
 
             # task id does not exist
-            response = client.get('/visualizations?task_id=123&filename="02.png"')
+            response = client.get("/visualizations?task_id=123&filename=image_0.png")
             assert response.status_code == 404
 
             # download existing vis image
             response = client.get(
-                f"/visualizations?task_id={self.task.id}&filename=02.png"
+                f"/visualizations?task_id={self.task.id}&filename=image_1.png"
             )
             assert response.status_code == 200
             assert response.headers["Content-Type"] == "image/png"
+
+
+# class TestResults(TestCase):
+#     def setUp(self) -> None:
+#         self.task = TaskFactory.create_task(num_images=1, status=Status.COMPLETED.name)
+
+#     def tearDown(self) -> None:
+#         self.task.destroy()
+
+#     def test_get_results(self):
+#         with app.test_client() as client:
+#             # task id not provided
+#             response = client.get("/results/csv?task_id=1234")
+#             assert response.status_code == 400

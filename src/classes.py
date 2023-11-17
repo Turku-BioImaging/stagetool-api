@@ -8,6 +8,8 @@ import subprocess
 from dotenv import load_dotenv
 from werkzeug.datastructures import FileStorage
 import shutil
+import pickle
+import json
 
 load_dotenv()
 env = os.getenv("ENV", "development")
@@ -26,7 +28,7 @@ class Status(Enum):
     FAILED = auto()
 
 
-class TaskNotFound(Exception):
+class TaskNotFoundError(Exception):
     pass
 
 
@@ -46,7 +48,6 @@ class Task:
 
         if id is not None:
             self._load_from_existing(id)
-            return
         else:
             self.id = str(uuid4().hex)
             self._configure_task_dir()
@@ -57,7 +58,7 @@ class Task:
             self.id = id
             self.task_dir = os.path.join(DATA_DIR, self.id)
             return True
-        raise TaskNotFound(f"Task with id {id} not found")
+        raise TaskNotFoundError(f"Task with id {id} not found")
 
     def _configure_task_dir(self):
         assert self.id is not None
@@ -74,6 +75,40 @@ class Task:
             fname = i.filename
             image_data = Image.open(io.BytesIO(i.read()))
             image_data.save(os.path.join(self.task_dir, "images", fname))
+
+    def _save_results_to_json(self):
+        """
+        Move all pkl files (if any) from the visualizations directory to the results directory and save the data from predicted_tub_cell_data.pkl to results.json.
+
+        Returns:
+            dict: A dictionary containing the data from predicted_tub_cell_data.pkl.
+        """
+        # Check if a dir has any *.pkl files
+        # Move all pkl files into the results dir
+        pkl_paths = glob(os.path.join(self.task_dir, "visualizations", "*.pkl"))
+        [
+            shutil.move(p, os.path.join(self.task_dir, "results", os.path.basename(p)))
+            for p in pkl_paths
+        ]
+
+        pkl_fpath = os.path.join(
+            self.task_dir, "results", "predicted_tub_cell_data.pkl"
+        )
+
+        results_fpath = os.path.join(self.task_dir, "results", "results.json")
+
+        if not os.path.isfile(pkl_fpath):
+            return
+
+        data_dict = PickleParser(pkl_fpath).parse()
+
+        if not os.path.isfile(results_fpath):
+            with open(
+                os.path.join(self.task_dir, "results", "results.json"), "w"
+            ) as json_file:
+                json.dump(data_dict, json_file)
+
+        return data_dict
 
     def execute(self):
         """
@@ -98,7 +133,7 @@ class Task:
             process = subprocess.Popen(
                 command, shell=True, stdout=devnull, stderr=devnull
             )
-        print("Process started with PID:", process.pid)
+        print("StageTool started with PID:", process.pid)
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
@@ -142,21 +177,81 @@ class Task:
                     os.path.join(self.task_dir, "visualizations", new_fname),
                 )
 
+        results_data = self._save_results_to_json()
         vis_fnames = sorted(glob(os.path.join(self.task_dir, "visualizations", "*")))
-        result_fnames = sorted(glob(os.path.join(self.task_dir, "results", "*")))
-
-        # Check if a dir has any *.pkl files
-        # Move all pkl files into the results dir
-        pkl_paths = glob(os.path.join(self.task_dir, "visualizations", "*.pkl"))
-        [
-            shutil.move(p, os.path.join(self.task_dir, "results", os.path.basename(p)))
-            for p in pkl_paths
-        ]
 
         return {
             "id": self.id,
             "status": self.status(),
             "image_filenames": [os.path.basename(i) for i in img_fnames],
             "visualization_filenames": [os.path.basename(i) for i in vis_fnames],
-            "results": [os.path.basename(i) for i in result_fnames],
+            "results": results_data,
         }
+
+    def destroy(self) -> None:
+        """
+        Deletes the task directory.
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        if os.path.isdir(self.task_dir):
+            shutil.rmtree(self.task_dir)
+
+
+class PickleParser:
+    def __init__(self, pickle_path: str):
+        self.pickle_path = pickle_path
+
+    def parse(self, return_json: bool = True) -> dict:
+        """
+        Parses a pickle file and returns a dictionary with the parsed data.
+
+        Args:
+            None
+        Returns:
+            dict: A dictionary containing the parsed data.
+        """
+        data_dict = {}
+
+        with open(self.pickle_path, "rb") as f:
+            results = pickle.load(f)
+
+        for img_name in results:
+            # parse cell data
+            cell_data = results[img_name]["cell_data"]
+
+            boxes = [list(map(int, b)) for b in cell_data["boxes"]]
+            scores = cell_data["scores"]
+            labels = cell_data["labels"]
+
+            cell_data_dict = {
+                "cell_data": {
+                    "boxes": boxes,
+                    "scores": scores,
+                    "labels": labels,
+                }
+            }
+
+            # parse tub data
+            tub_data = results[img_name]["tub_data"]
+            labels = tub_data["labels"]
+            scores = tub_data["scores"]
+            boxes = [list(map(int, b)) for b in tub_data["boxes"]]
+            contours = [j.flatten().tolist() for i in tub_data["contours"] for j in i]
+
+            tub_data_dict = {
+                "tub_data": {
+                    "labels": labels,
+                    "scores": scores,
+                    "boxes": boxes,
+                    "contours": contours,
+                }
+            }
+
+            # assemble img name data dict
+            data_dict[img_name] = {**cell_data_dict, **tub_data_dict}
+
+        return data_dict
