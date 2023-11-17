@@ -1,9 +1,7 @@
 # StageTool API
-![stagetool-architecture-diagram](https://github.com/Turku-BioImaging/stagetool-api/assets/11444749/b9daf7e0-fd13-4c40-889b-0a48767b9fe7)
+RESTful API handless communication between StageTool Core and StageTool UI. StageTool is a convolutional deep neural network-based approach that facilitates the analysis of spermatogenesis in DAPI-stained mouse testis cross-sections.
 
-REST API for StageTool, a convolutional deep neural network-based approach that facilitates the analysis of spermatogenesis in DAPI-stained mouse testis cross-sections.
-
-StageTool API handles communication between StageTool Core and StageTool UI.
+![stagetool-architecture-diagram](https://github.com/Turku-BioImaging/stagetool-api/assets/11444749/637b64dd-c24b-4181-b67e-3754259eb91f)
 
 ## Dev / Testing
 
