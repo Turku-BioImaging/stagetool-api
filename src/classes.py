@@ -28,7 +28,7 @@ class Status(Enum):
     FAILED = auto()
 
 
-class TaskNotFound(Exception):
+class TaskNotFoundError(Exception):
     pass
 
 
@@ -48,7 +48,6 @@ class Task:
 
         if id is not None:
             self._load_from_existing(id)
-            return
         else:
             self.id = str(uuid4().hex)
             self._configure_task_dir()
@@ -59,7 +58,7 @@ class Task:
             self.id = id
             self.task_dir = os.path.join(DATA_DIR, self.id)
             return True
-        raise TaskNotFound(f"Task with id {id} not found")
+        raise TaskNotFoundError(f"Task with id {id} not found")
 
     def _configure_task_dir(self):
         assert self.id is not None
@@ -188,6 +187,18 @@ class Task:
             "visualization_filenames": [os.path.basename(i) for i in vis_fnames],
             "results": results_data,
         }
+
+    def destroy(self) -> None:
+        """
+        Deletes the task directory.
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        if os.path.isdir(self.task_dir):
+            shutil.rmtree(self.task_dir)
 
 
 class PickleParser:
