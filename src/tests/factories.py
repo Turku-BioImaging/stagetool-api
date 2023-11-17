@@ -6,7 +6,8 @@ import numpy as np
 from PIL import Image
 from io import BytesIO
 import shutil
-# import pickle 
+
+# import pickle
 
 load_dotenv()
 
@@ -35,8 +36,7 @@ class TaskFactory:
                 img_bytes.seek(0)
                 images.append(FileStorage(img_bytes, filename=f"image_{i}.png"))
             task = Task(images=images)
-            
-            print(images)
+
         elif image_fnames is not None:
             images = []
             for fname in image_fnames:
@@ -51,11 +51,13 @@ class TaskFactory:
             return task
 
         if status == Status.COMPLETED.name:
-            task_img_paths = os.listdir(os.path.join(DATA_DIR, task.id, "images"))  
+            task_img_paths = os.listdir(os.path.join(DATA_DIR, task.id, "images"))
             for i in task_img_paths:
                 shutil.copy(
                     os.path.join(DATA_DIR, task.id, "images", os.path.basename(i)),
-                    os.path.join(DATA_DIR, task.id, "visualizations", os.path.basename(i)),
+                    os.path.join(
+                        DATA_DIR, task.id, "visualizations", os.path.basename(i)
+                    ),
                 )
 
             pkl_path = os.path.join(
@@ -65,4 +67,4 @@ class TaskFactory:
                 pkl_path, os.path.join(DATA_DIR, task.id, "results", "results.pkl")
             )
 
-        return task
+            return task
