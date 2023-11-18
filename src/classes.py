@@ -98,7 +98,7 @@ class Task:
         results_fpath = os.path.join(self.task_dir, "results", "results.json")
 
         if not os.path.isfile(pkl_fpath):
-            return
+            return {}
 
         data_dict = PickleParser(pkl_fpath).parse()
 
@@ -205,7 +205,7 @@ class PickleParser:
     def __init__(self, pickle_path: str):
         self.pickle_path = pickle_path
 
-    def parse(self, return_json: bool = True) -> dict:
+    def parse(self) -> dict:
         """
         Parses a pickle file and returns a dictionary with the parsed data.
 
