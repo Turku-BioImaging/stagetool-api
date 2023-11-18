@@ -258,7 +258,7 @@
                 "type": "array"
               },
               "results": {
-                "type": "array"
+                "type": "object"
               }
             }
           }
