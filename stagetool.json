@@ -248,19 +248,14 @@
             "type": "string",
             "enum": ["pending", "completed", "failed"]
           },
-          "data": {
-            "type": "object",
-            "properties": {
-              "image_filenames": {
-                "type": "array"
-              },
-              "visualization_filenames": {
-                "type": "array"
-              },
-              "results": {
-                "type": "object"
-              }
-            }
+          "image_filenames": {
+            "type": "array"
+          },
+          "visualization_filenames": {
+            "type": "array"
+          },
+          "results": {
+            "type": "object"
           }
         }
       }
