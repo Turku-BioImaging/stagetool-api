@@ -5,13 +5,15 @@ import os
 from classes import Task, TaskCreationError, TaskNotFoundError
 from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, request, send_file
+from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
 
 
 app.config["ENV"] = os.getenv("ENV", "development")
-
+# Add the following line to enable CORS
+CORS(app)
 
 if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "data-dev")
@@ -39,12 +41,13 @@ def post_task():
         images = request.files.getlist("images")
 
         task = Task(images=images)
-        if not os.environ["ENV"] == "testing":
+        if not app.config["ENV"] == "testing":
             task.execute()
 
         return jsonify(task.data()), 201
     except TaskCreationError:
         abort(500)
+
 
 
 @app.route("/images", methods=["GET"])
