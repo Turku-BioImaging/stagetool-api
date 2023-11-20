@@ -139,6 +139,9 @@ class Task:
         if not os.path.isdir(self.task_dir):
             return Status.PENDING.name.lower()
 
+        # Change this logic. 
+        # It's safer to check that each filename in images
+        # has a corresponding filename in visualizations.
         images_count = len(glob(os.path.join(self.task_dir, "images", "*")))
 
         visualizations_count = len(
