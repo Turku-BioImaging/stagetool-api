@@ -1,3 +1,10 @@
+"""
+Here we define the Task class, which serves as a handle for prediction tasks containing several images and takes care of initializing StageTool Core. The PickleParser class is used to parse the results of the prediction task and return a dictionary with the parsed data.
+
+Author: Junel Solis, Turku BioImaging, Turku, Finland, 2023.
+"""
+
+
 from glob import glob
 from PIL import Image
 import io
@@ -256,5 +263,25 @@ class PickleParser:
 
             # assemble img name data dict
             data_dict[img_name] = {**cell_data_dict, **tub_data_dict}
+            
+            
+            # pkl_data = {
+            #     'img_name_01.png': {        # image file name
+            #         'tubules': {            # dict key holding data for all tubules
+            #             'id': 0,            # assign an id -- i.e. top-left - bottom-right?
+            #             'labels': [],       # same as before
+            #             'scores': [],       # same as before
+            #             'boxes': [],        # same as before
+            #             'contours': [],     # same as before
+            #             'cells': {          # dict key holding all cell data INSIDE the tubule
+            #                 'labels': [],   # same as before
+            #                 'scores': [],   # same as before
+            #                 'boxes': [],    # same as before
+            #             }
+            #         }
+            #     },
+            #     'image_name_02.png': {...},
+            #     'image_name_03.png': {...},
+            # }
 
         return data_dict
