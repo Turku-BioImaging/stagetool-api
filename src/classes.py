@@ -137,6 +137,9 @@ class Task:
 
         # Start the command as a background process
         with open(os.devnull, "w") as devnull:
+            if env == "development":
+                process = subprocess.Popen(command, shell=True)
+            else:
             process = subprocess.Popen(
                 command, shell=True, stdout=devnull, stderr=devnull
             )
