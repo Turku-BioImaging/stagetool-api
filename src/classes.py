@@ -183,8 +183,8 @@ class Task:
         #  - Consider implementing this at the Docker level
         for p in vis_fnames:
             fname = os.path.basename(p)
-            if fname.startswith("pred_"):
-                new_fname = fname.replace("pred_", "")
+            if fname.startswith("numbered_pred_"):
+                new_fname = fname.replace("numbered_pred_", "")
                 os.rename(
                     os.path.join(self.task_dir, "visualizations", fname),
                     os.path.join(self.task_dir, "visualizations", new_fname),
