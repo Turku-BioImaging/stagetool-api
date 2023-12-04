@@ -7,6 +7,7 @@ dependencies:
   - pip
   - pip:
       - flask==3.0
+      - flask_cors
       - jsonschema==4.19
       - pillow==10.1
       - python-dotenv==1.0
