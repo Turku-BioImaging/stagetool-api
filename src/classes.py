@@ -85,7 +85,7 @@ class Task:
 
     def _save_results_to_json(self):
         """
-        Move all pkl files (if any) from the visualizations directory to the results directory and save the data from predicted_tub_cell_data.pkl to results.json.
+        Move all pkl files (if any) from the visualizations directory to the results directory and save the data from modified_predicted_tub_cell_data.pkl to results.json.
 
         Returns:
             dict: A dictionary containing the data from predicted_tub_cell_data.pkl.
@@ -99,7 +99,7 @@ class Task:
         ]
 
         pkl_fpath = os.path.join(
-            self.task_dir, "results", "predicted_tub_cell_data.pkl"
+            self.task_dir, "results", "modified_predicted_tub_cell_data.pkl"
         )
 
         results_fpath = os.path.join(self.task_dir, "results", "results.json")
@@ -149,7 +149,7 @@ class Task:
         if not os.path.isdir(self.task_dir):
             return Status.PENDING.name.lower()
 
-        # Change this logic. 
+        # Change this logic.
         # It's safer to check that each filename in images
         # has a corresponding filename in visualizations.
         images_count = len(glob(os.path.join(self.task_dir, "images", "*")))
@@ -233,58 +233,30 @@ class PickleParser:
             results = pickle.load(f)
 
         for img_name in results:
-            # parse cell data
-            cell_data = results[img_name]["cell_data"]
+            img_data_dict = {f"{img_name}": {"tubules": []}}
 
-            boxes = [list(map(int, b)) for b in cell_data["boxes"]]
-            scores = cell_data["scores"]
-            labels = cell_data["labels"]
+            # get tubule data
+            tubules = results[img_name]["tubules"]
 
-            cell_data_dict = {
-                "cell_data": {
-                    "boxes": boxes,
-                    "scores": scores,
-                    "labels": labels,
+            for tub in tubules:
+                tub_dict = {}
+                tub_dict["id"] = tub["id"]
+                tub_dict["label"] = tub["label"]
+                tub_dict["score"] = tub["score"]
+                tub_dict["box"] = tub["box"]
+                tub_dict["contours"] = [
+                    j.flatten().tolist() for i in tub["contours"] for j in i
+                ]
+
+                tub_dict["cells"] = {
+                    "labels": tub["cells"]["labels"],
+                    "scores": tub["cells"]["scores"],
+                    "boxes": [list(map(int, b)) for b in tub["cells"]["boxes"]],
                 }
-            }
+                
+                img_data_dict[f"{img_name}"]["tubules"].append(tub_dict)
+                
+            data_dict.update(img_data_dict)
 
-            # parse tub data
-            tub_data = results[img_name]["tub_data"]
-            labels = tub_data["labels"]
-            scores = tub_data["scores"]
-            boxes = [list(map(int, b)) for b in tub_data["boxes"]]
-            contours = [j.flatten().tolist() for i in tub_data["contours"] for j in i]
-
-            tub_data_dict = {
-                "tub_data": {
-                    "labels": labels,
-                    "scores": scores,
-                    "boxes": boxes,
-                    "contours": contours,
-                }
-            }
-
-            # assemble img name data dict
-            data_dict[img_name] = {**cell_data_dict, **tub_data_dict}
-            
-            
-            # pkl_data = {
-            #     'img_name_01.png': {        # image file name
-            #         'tubules': {            # dict key holding data for all tubules
-            #             'id': 0,            # assign an id -- i.e. top-left - bottom-right?
-            #             'labels': [],       # same as before
-            #             'scores': [],       # same as before
-            #             'boxes': [],        # same as before
-            #             'contours': [],     # same as before
-            #             'cells': {          # dict key holding all cell data INSIDE the tubule
-            #                 'labels': [],   # same as before
-            #                 'scores': [],   # same as before
-            #                 'boxes': [],    # same as before
-            #             }
-            #         }
-            #     },
-            #     'image_name_02.png': {...},
-            #     'image_name_03.png': {...},
-            # }
 
         return data_dict
