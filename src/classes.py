@@ -140,9 +140,9 @@ class Task:
             if env == "development":
                 process = subprocess.Popen(command, shell=True)
             else:
-            process = subprocess.Popen(
-                command, shell=True, stdout=devnull, stderr=devnull
-            )
+                process = subprocess.Popen(
+                    command, shell=True, stdout=devnull, stderr=devnull
+                )
         print("StageTool started with PID:", process.pid)
 
     def status(self) -> str:
