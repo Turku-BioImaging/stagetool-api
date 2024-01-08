@@ -152,15 +152,9 @@ class Task:
         # Change this logic.
         # It's safer to check that each filename in images
         # has a corresponding filename in visualizations.
-        images_count = len(glob(os.path.join(self.task_dir, "images", "*")))
-
-        visualizations_count = len(
-            glob(os.path.join(self.task_dir, "visualizations", "*"))
-        )
-
         has_results = glob(os.path.join(self.task_dir, "results", "*.pkl"))
 
-        if (images_count == visualizations_count) and has_results:
+        if has_results:
             return Status.COMPLETED.name.lower()
 
         return Status.PENDING.name.lower()
@@ -253,10 +247,9 @@ class PickleParser:
                     "scores": tub["cells"]["scores"],
                     "boxes": [list(map(int, b)) for b in tub["cells"]["boxes"]],
                 }
-                
-                img_data_dict[f"{img_name}"]["tubules"].append(tub_dict)
-                
-            data_dict.update(img_data_dict)
 
+                img_data_dict[f"{img_name}"]["tubules"].append(tub_dict)
+
+            data_dict.update(img_data_dict)
 
         return data_dict
