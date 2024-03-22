@@ -12,9 +12,9 @@ app = Flask(__name__)
 
 
 app.config["ENV"] = os.getenv("ENV", "development")
-# allowed_origins = os.getenv("ALLOWED_ORIGINS").split(",")
+allowed_origins = os.getenv("ALLOWED_ORIGINS").split(",")
 # Add the following line to enable CORS
-CORS(app)
+CORS(app, origins=allowed_origins)
 
 if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "data-dev")
