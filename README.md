@@ -13,6 +13,11 @@ DOCKER_IMAGE_NAME=ghcr.io/turku-bioimaging/stagetool-core
 DOCKER_IMAGE_VERSION=0.1.0
 ```
 
+## Deploy
+```
+ gunicorn -w 4 -b :6700 --log-level debug main:app
+ ```
+
 ## Cite this work
 __BibTeX__
 ```
