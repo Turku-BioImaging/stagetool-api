@@ -10,7 +10,8 @@ Create a `.env` inside `./src` with the following keys
 ```
 ENV=development // can be "production" or "staging"
 DOCKER_IMAGE_NAME=ghcr.io/turku-bioimaging/stagetool-core
-DOCKER_IMAGE_VERSION=0.1.0
+DOCKER_IMAGE_VERSION=0.1.2
+ALLOWED_ORIGINS= (Enter address of UI app for CORS)
 ```
 
 ## Deploy
