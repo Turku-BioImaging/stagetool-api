@@ -130,7 +130,7 @@ class Task:
             None
         """
 
-        input_vol_bind = f"{self.task_dir}/images:/app/input"
+        """ input_vol_bind = f"{self.task_dir}/images:/app/input"
         output_vol_bind = f"{self.task_dir}/visualizations:/app/output"
 
         command = f"docker run --rm -v {input_vol_bind} -v {output_vol_bind} {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VERSION}"
@@ -142,8 +142,15 @@ class Task:
             else:
                 process = subprocess.Popen(
                     command, shell=True, stdout=devnull, stderr=devnull
-                )
-        print("StageTool started with PID:", process.pid)
+                ) """
+        
+        import socket
+
+        clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        clientsocket.connect(('localhost', 8089))
+        clientsocket.send(b'hello')
+        """ print("StageTool started with PID:", process.pid)
+        print (command) """
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
