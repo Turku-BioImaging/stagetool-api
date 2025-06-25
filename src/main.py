@@ -106,8 +106,7 @@ def get_visualization():
 
 
 if __name__ == "__main__":
-    if __name__ == "__main__":
-        if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
-            app.run(debug=True)
-        else:
-            app.run()
+    if app.config["ENV"] == "development" or app.config["ENV"] == "testing":
+        app.run(debug=True)
+    else:
+        app.run()
