@@ -9,6 +9,8 @@ from glob import glob
 from PIL import Image
 import io
 import os
+from os import listdir
+from os.path import isfile, join
 from enum import Enum, auto
 from uuid import uuid4
 import subprocess
@@ -17,6 +19,9 @@ from werkzeug.datastructures import FileStorage
 import shutil
 import pickle
 import json
+import skimage as ski
+import socket
+import numpy as np
 
 load_dotenv()
 env = os.getenv("ENV", "development")
@@ -129,28 +134,57 @@ class Task:
         Returns:
             None
         """
+    
+        container_name = "stagetool-core"
+        input_image_path = f"{self.task_dir}/images/"
+        onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
+        image_name = onlyfiles[0]
+        image = input_image_path+"/"+image_name
+        print(image)
 
-        """ input_vol_bind = f"{self.task_dir}/images:/app/input"
-        output_vol_bind = f"{self.task_dir}/visualizations:/app/output"
+        copy_command = f"docker cp {image} {container_name}:/app/input"
 
-        command = f"docker run --rm -v {input_vol_bind} -v {output_vol_bind} {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VERSION}"
+        exec_command = f"docker exec -d {container_name} python /app/STAGETOOL.py"
 
-        # Start the command as a background process
-        with open(os.devnull, "w") as devnull:
-            if env == "development":
-                process = subprocess.Popen(command, shell=True)
-            else:
-                process = subprocess.Popen(
-                    command, shell=True, stdout=devnull, stderr=devnull
-                ) """
-        
-        import socket
+        out_copy_command = f"docker cp {container_name}:/app/output {self.task_dir}/visualizations"
 
+        process = subprocess.Popen(copy_command, shell=True)
+        process = subprocess.Popen(exec_command, shell=True)
+        process = subprocess.Popen(out_copy_command, shell=True)
+
+
+        """ 
+        # OLD: Via Socket
+        # Setup socket
         clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         clientsocket.connect(('localhost', 8089))
-        clientsocket.send(b'hello')
-        """ print("StageTool started with PID:", process.pid)
-        print (command) """
+
+        # pack image data
+        input_image_path = f"{self.task_dir}/images/"
+        onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
+        image_name = onlyfiles[0]
+        image = ski.io.imread(input_image_path+"/"+image_name)
+        print(image)
+        byte_image = bytes(image)
+        print(len(byte_image))
+
+        # build metadata json
+        json_metadata = {'image_name':image_name, 'image_shape':image.shape, 'image_size': len(byte_image)}
+        json_metadata_dump = json.dumps(json_metadata)
+
+        initial_value = "0"
+        size = 128 - len(json_metadata_dump) 
+        buffer = size * initial_value
+
+        # Send json, 128 bit
+        clientsocket.sendall((bytes(json_metadata_dump,encoding="utf-8")))
+        clientsocket.sendall((bytes(buffer,encoding="utf-8")))
+
+        # send Data
+        import time
+
+        time.sleep(2.5)
+        clientsocket.sendall(byte_image) """
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
