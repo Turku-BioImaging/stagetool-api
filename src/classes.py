@@ -126,7 +126,7 @@ class Task:
         """
         Executes StageTool Docker command in the background.
 
-        The method runs a StageTool Docker command in the background using the `subprocess.Popen` function.
+        The method runs a StageTool Docker command in the background using the `os.system` function.
 
         Args:
             None
@@ -136,55 +136,39 @@ class Task:
         """
     
         container_name = "stagetool-core"
-        input_image_path = f"{self.task_dir}/images/"
+        input_image_path = f"{self.task_dir}/images"
         onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
         image_name = onlyfiles[0]
+        image_name_no_ending = image_name.split(".")[0]
         image = input_image_path+"/"+image_name
-        print(image)
 
-        copy_command = f"docker cp {image} {container_name}:/app/input"
-
-        exec_command = f"docker exec -d {container_name} python /app/STAGETOOL.py"
-
-        out_copy_command = f"docker cp {container_name}:/app/output {self.task_dir}/visualizations"
-
-        process = subprocess.Popen(copy_command, shell=True)
-        process = subprocess.Popen(exec_command, shell=True)
-        process = subprocess.Popen(out_copy_command, shell=True)
+        docker_input_path = "/app/input/"
+        docker_output_path = "/app/output/"
 
 
-        """ 
-        # OLD: Via Socket
-        # Setup socket
-        clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientsocket.connect(('localhost', 8089))
+        create_dir_command = f"docker exec {container_name} mkdir {docker_input_path}{image_name_no_ending}/"
+        process_copy_command = os.system(create_dir_command)
 
-        # pack image data
-        input_image_path = f"{self.task_dir}/images/"
-        onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
-        image_name = onlyfiles[0]
-        image = ski.io.imread(input_image_path+"/"+image_name)
-        print(image)
-        byte_image = bytes(image)
-        print(len(byte_image))
+        create_dir_command = f"docker exec {container_name} mkdir {docker_output_path}{image_name_no_ending}/"
+        process_copy_command = os.system(create_dir_command)
 
-        # build metadata json
-        json_metadata = {'image_name':image_name, 'image_shape':image.shape, 'image_size': len(byte_image)}
-        json_metadata_dump = json.dumps(json_metadata)
+        create_dir_command = f"docker exec {container_name} ls {docker_input_path}/"
+        process_copy_command = os.system(create_dir_command)
 
-        initial_value = "0"
-        size = 128 - len(json_metadata_dump) 
-        buffer = size * initial_value
+        copy_command = f"docker cp {image} {container_name}:{docker_input_path}{image_name_no_ending}/"
+        process_copy_command = os.system(copy_command)
 
-        # Send json, 128 bit
-        clientsocket.sendall((bytes(json_metadata_dump,encoding="utf-8")))
-        clientsocket.sendall((bytes(buffer,encoding="utf-8")))
+        exec_command = f"docker exec {container_name} python /app/STAGETOOL.py --image_name {image_name_no_ending}"
+        process_exec_command = os.system(exec_command)
 
-        # send Data
-        import time
+        out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending}/ {self.task_dir}/visualizations/{image_name_no_ending}/"
+        process_out_copy_command = os.system(out_copy_command)
+        
+        exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending} && rm -rf {docker_output_path}{image_name_no_ending}"
+        process_exec_command = subprocess.Popen(exec_command, shell=True)
 
-        time.sleep(2.5)
-        clientsocket.sendall(byte_image) """
+        exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending}"
+        process_exec_command = subprocess.Popen(exec_command, shell=True)
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
