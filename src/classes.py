@@ -135,7 +135,7 @@ class Task:
             None
         """
     
-        container_name = "stagetool-core"
+        container_name = f"{DOCKER_IMAGE_NAME}{DOCKER_IMAGE_VERSION}"
         input_image_path = f"{self.task_dir}/images"
         onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
         image_name = onlyfiles[0]
@@ -161,10 +161,11 @@ class Task:
         exec_command = f"docker exec {container_name} python /app/STAGETOOL.py --image_name {image_name_no_ending}"
         process_exec_command = os.system(exec_command)
 
-        out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending}/ {self.task_dir}/visualizations/{image_name_no_ending}/"
+        os.system(f"mkdir -p {self.task_dir}/visualizations")
+        out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending}/. {self.task_dir}/visualizations/"
         process_out_copy_command = os.system(out_copy_command)
         
-        exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending} && rm -rf {docker_output_path}{image_name_no_ending}"
+        exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending} && rm -rf {docker_output_path}"
         process_exec_command = subprocess.Popen(exec_command, shell=True)
 
         exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending}"
@@ -172,7 +173,7 @@ class Task:
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
-            return Status.PENDING.name.lower()
+            return Status.PENDING.name.lower()        
 
         # Change this logic.
         # It's safer to check that each filename in images
