@@ -91,17 +91,23 @@ def get_visualization():
         return jsonify({"error": "Visualization not found"}), 404
 
 
-@app.route("/results/csv", methods=["GET"])
-def get_results_csv():
+@app.route("/results", methods=["GET"])
+def get_results():
     task_id = request.args.get("task_id")
 
     if not task_id:
         abort(400, description="Required query parameters are missing.")
     try:
         task = Task(id=task_id)
-        return "CSV file here.", 200
-    except TaskNotFound:
-        return jsonify({"error": "Task not found"}), 404
+        res_path = os.path.join(DATA_DIR, task.id, "results", "results.json")
+        with open(res_path, "rb") as res:
+            res_data = res.read()
+        return send_file(
+            io.BytesIO(res_data), mimetype=mimetypes.guess_type(res_path)[0]
+        )
+
+    except TaskNotFoundError or FileNotFoundError:
+        return jsonify({"error": "Result not found"}), 404
 
 
 if __name__ == "__main__":
