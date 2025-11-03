@@ -9,6 +9,8 @@ from glob import glob
 from PIL import Image
 import io
 import os
+from os import listdir
+from os.path import isfile, join
 from enum import Enum, auto
 from uuid import uuid4
 import subprocess
@@ -17,6 +19,9 @@ from werkzeug.datastructures import FileStorage
 import shutil
 import pickle
 import json
+import skimage as ski
+import socket
+import numpy as np
 
 load_dotenv()
 env = os.getenv("ENV", "development")
@@ -98,16 +103,19 @@ class Task:
             for p in pkl_paths
         ]
 
-        pkl_fpath = os.path.join(
-            self.task_dir, "results", "modified_predicted_tub_cell_data.pkl"
+        
+        pkl_fpath = glob(os.path.join(
+            self.task_dir, "results", "*_modified_predicted_tub_cell_data.pkl"
+            )
         )
 
         results_fpath = os.path.join(self.task_dir, "results", "results.json")
-
-        if not os.path.isfile(pkl_fpath):
-            return {}
-
-        data_dict = PickleParser(pkl_fpath).parse()
+        
+        for pkl_file in pkl_fpath:
+            if not os.path.isfile(pkl_file):
+                return {}
+            
+        data_dict = (PickleParser(pkl_fpath).parse())
 
         if not os.path.isfile(results_fpath):
             with open(
@@ -121,7 +129,7 @@ class Task:
         """
         Executes StageTool Docker command in the background.
 
-        The method runs a StageTool Docker command in the background using the `subprocess.Popen` function.
+        The method runs a StageTool Docker command in the background using the `os.system` function.
 
         Args:
             None
@@ -129,25 +137,46 @@ class Task:
         Returns:
             None
         """
+    
+        container_name = f"{DOCKER_IMAGE_NAME}{DOCKER_IMAGE_VERSION}"
+        input_image_path = f"{self.task_dir}/images"
+        onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
+        for image_name in onlyfiles:
+            image_name_no_ending = image_name.split(".")[0]
+            image = input_image_path+"/"+image_name
 
-        input_vol_bind = f"{self.task_dir}/images:/app/input"
-        output_vol_bind = f"{self.task_dir}/visualizations:/app/output"
+            docker_input_path = "/app/input/"
+            docker_output_path = "/app/output/"
 
-        command = f"docker run --rm -v {input_vol_bind} -v {output_vol_bind} {DOCKER_IMAGE_NAME}:{DOCKER_IMAGE_VERSION}"
 
-        # Start the command as a background process
-        with open(os.devnull, "w") as devnull:
-            if env == "development":
-                process = subprocess.Popen(command, shell=True)
-            else:
-                process = subprocess.Popen(
-                    command, shell=True, stdout=devnull, stderr=devnull
-                )
-        print("StageTool started with PID:", process.pid)
+            create_dir_command = f"docker exec {container_name} mkdir {docker_input_path}{image_name_no_ending}/"
+            process_copy_command = os.system(create_dir_command)
+
+            create_dir_command = f"docker exec {container_name} mkdir {docker_output_path}{image_name_no_ending}/"
+            process_copy_command = os.system(create_dir_command)
+
+            create_dir_command = f"docker exec {container_name} ls {docker_input_path}/"
+            process_copy_command = os.system(create_dir_command)
+
+            copy_command = f"docker cp {image} {container_name}:{docker_input_path}{image_name_no_ending}/"
+            process_copy_command = os.system(copy_command)
+
+            exec_command = f"docker exec {container_name} python /app/STAGETOOL.py --image_name {image_name_no_ending}"
+            process_exec_command = os.system(exec_command)
+
+            os.system(f"mkdir -p {self.task_dir}/visualizations")
+            out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending}/. {self.task_dir}/visualizations/"
+            process_out_copy_command = os.system(out_copy_command)
+            
+            exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending} && rm -rf {docker_output_path}"
+            process_exec_command = subprocess.Popen(exec_command, shell=True)
+
+            exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending}"
+            process_exec_command = subprocess.Popen(exec_command, shell=True)
 
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
-            return Status.PENDING.name.lower()
+            return Status.PENDING.name.lower()        
 
         # Change this logic.
         # It's safer to check that each filename in images
@@ -223,33 +252,34 @@ class PickleParser:
         """
         data_dict = {}
 
-        with open(self.pickle_path, "rb") as f:
-            results = pickle.load(f)
+        for file_path in self.pickle_path:
+            with open(file_path, "rb") as f:
+                results = pickle.load(f)
 
-        for img_name in results:
-            img_data_dict = {f"{img_name}": {"tubules": []}}
+            for img_name in results:
+                img_data_dict = {f"{img_name}": {"tubules": []}}
 
-            # get tubule data
-            tubules = results[img_name]["tubules"]
+                # get tubule data
+                tubules = results[img_name]["tubules"]
 
-            for tub in tubules:
-                tub_dict = {}
-                tub_dict["id"] = tub["id"]
-                tub_dict["label"] = tub["label"]
-                tub_dict["score"] = tub["score"]
-                tub_dict["box"] = tub["box"]
-                tub_dict["contours"] = [
-                    j.flatten().tolist() for i in tub["contours"] for j in i
-                ]
+                for tub in tubules:
+                    tub_dict = {}
+                    tub_dict["id"] = tub["id"]
+                    tub_dict["label"] = tub["label"]
+                    tub_dict["score"] = tub["score"]
+                    tub_dict["box"] = tub["box"]
+                    tub_dict["contours"] = [
+                        j.flatten().tolist() for i in tub["contours"] for j in i
+                    ]
 
-                tub_dict["cells"] = {
-                    "labels": tub["cells"]["labels"],
-                    "scores": tub["cells"]["scores"],
-                    "boxes": [list(map(int, b)) for b in tub["cells"]["boxes"]],
-                }
+                    tub_dict["cells"] = {
+                        "labels": tub["cells"]["labels"],
+                        "scores": tub["cells"]["scores"],
+                        "boxes": [list(map(int, b)) for b in tub["cells"]["boxes"]],
+                    }
 
-                img_data_dict[f"{img_name}"]["tubules"].append(tub_dict)
+                    img_data_dict[f"{img_name}"]["tubules"].append(tub_dict)
 
-            data_dict.update(img_data_dict)
+                data_dict.update(img_data_dict)
 
         return data_dict
