@@ -19,14 +19,13 @@ from werkzeug.datastructures import FileStorage
 import shutil
 import pickle
 import json
-import skimage as ski
-import socket
-import numpy as np
+import re
 
 load_dotenv()
 env = os.getenv("ENV", "development")
 DOCKER_IMAGE_NAME = os.getenv("DOCKER_IMAGE_NAME")
 DOCKER_IMAGE_VERSION = os.getenv("DOCKER_IMAGE_VERSION")
+REPLACE_REGEX = r"[^a-zA-Z0-9_\-]" #True if: NOT (a-z, A-Z, 0-9, _, -)
 
 if env == "development":
     DATA_DIR = os.path.join(os.path.dirname(__file__), "data-dev")
@@ -84,7 +83,8 @@ class Task:
 
     def _save_images_to_task_dir(self, images: FileStorage):
         for i in images:
-            fname = i.filename
+            file_ending = f".{i.filename.split('.')[-1]}"
+            fname = re.sub(REPLACE_REGEX, '_', i.filename.split('.')[0])+file_ending
             image_data = Image.open(io.BytesIO(i.read()))
             image_data.save(os.path.join(self.task_dir, "images", fname))
 
@@ -143,35 +143,36 @@ class Task:
         onlyfiles = [f for f in listdir(input_image_path) if isfile(join(input_image_path, f))]
         for image_name in onlyfiles:
             image_name_no_ending = image_name.split(".")[0]
+            image_name_no_ending_sanitized = re.sub(REPLACE_REGEX, '_', image_name_no_ending)
             image = input_image_path+"/"+image_name
 
             docker_input_path = "/app/input/"
             docker_output_path = "/app/output/"
 
 
-            create_dir_command = f"docker exec {container_name} mkdir {docker_input_path}{image_name_no_ending}/"
+            create_dir_command = f"docker exec {container_name} mkdir {docker_input_path}{image_name_no_ending_sanitized}/"
             process_copy_command = os.system(create_dir_command)
 
-            create_dir_command = f"docker exec {container_name} mkdir {docker_output_path}{image_name_no_ending}/"
+            create_dir_command = f"docker exec {container_name} mkdir {docker_output_path}{image_name_no_ending_sanitized}/"
             process_copy_command = os.system(create_dir_command)
 
-            create_dir_command = f"docker exec {container_name} ls {docker_input_path}/"
+            create_dir_command = f"docker exec {container_name} ls {docker_input_path}"
             process_copy_command = os.system(create_dir_command)
 
-            copy_command = f"docker cp {image} {container_name}:{docker_input_path}{image_name_no_ending}/"
+            copy_command = f"docker cp {image} {container_name}:{docker_input_path}{image_name_no_ending_sanitized}/"
             process_copy_command = os.system(copy_command)
 
-            exec_command = f"docker exec {container_name} python /app/STAGETOOL.py --image_name {image_name_no_ending}"
+            exec_command = f"docker exec {container_name} python /app/STAGETOOL.py --image_name {image_name_no_ending_sanitized}"
             process_exec_command = os.system(exec_command)
 
             os.system(f"mkdir -p {self.task_dir}/visualizations")
-            out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending}/. {self.task_dir}/visualizations/"
+            out_copy_command = f"docker cp {container_name}:{docker_output_path}{image_name_no_ending_sanitized}/. {self.task_dir}/visualizations/"
             process_out_copy_command = os.system(out_copy_command)
-            
-            exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending} && rm -rf {docker_output_path}"
+
+            exec_command = f"docker exec {container_name} rm -rf {docker_input_path}{image_name_no_ending_sanitized} && rm -rf {docker_output_path}"
             process_exec_command = subprocess.Popen(exec_command, shell=True)
 
-            exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending}"
+            exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending_sanitized}"
             process_exec_command = subprocess.Popen(exec_command, shell=True)
 
     def status(self) -> str:
