@@ -85,6 +85,8 @@ class Task:
         for i in images:
             file_ending = f".{i.filename.split('.')[-1]}"
             fname = re.sub(REPLACE_REGEX, '_', i.filename.split('.')[0])+file_ending
+            if re.match("pred_", fname):
+                fname = re.sub("pred_", "pred-", fname)
             image_data = Image.open(io.BytesIO(i.read()))
             image_data.save(os.path.join(self.task_dir, "images", fname))
 
