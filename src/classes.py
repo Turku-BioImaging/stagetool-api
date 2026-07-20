@@ -20,6 +20,7 @@ import shutil
 import pickle
 import json
 import re
+import time
 
 load_dotenv()
 env = os.getenv("ENV", "development")
@@ -80,6 +81,8 @@ class Task:
         os.makedirs(os.path.join(self.task_dir, "images"))
         os.makedirs(os.path.join(self.task_dir, "visualizations"))
         os.makedirs(os.path.join(self.task_dir, "results"))
+        os.makedirs(os.path.join(self.task_dir, "resultconversions"))
+        os.makedirs(os.path.join(self.task_dir, "imageconversions"))
 
     def _save_images_to_task_dir(self, images: FileStorage):
         for i in images:
@@ -177,6 +180,25 @@ class Task:
             exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending_sanitized}"
             process_exec_command = subprocess.Popen(exec_command, shell=True)
 
+            time.sleep(3)
+
+            os.system(f"mkdir -p {self.task_dir}/resultconversions")
+            os.system(f"mkdir -p {self.task_dir}/imageconversions")            
+            try:
+                im = Image.open(f"{self.task_dir}/images/{image_name}")
+                print (f"Generating preview jpeg for the tiff image {image_name_no_ending}")
+                im.thumbnail(im.size)
+                im.save(f"{self.task_dir}/imageconversions/{image_name_no_ending}.jpg", "JPEG", quality=100)
+
+                print (f"Generating result jpeg for the tiff image {image_name_no_ending}")
+                pred_im = Image.open(f"{self.task_dir}/visualizations/{image_name}")
+                pred_im.thumbnail(pred_im.size)
+                pred_im.save(f"{self.task_dir}/resultconversions/result_{image_name_no_ending}.jpg", "JPEG", quality=100)
+            except Exception as e:
+                print(e)
+
+
+
     def status(self) -> str:
         if not os.path.isdir(self.task_dir):
             return Status.PENDING.name.lower()        
@@ -203,6 +225,8 @@ class Task:
         """
         img_fnames = sorted(glob(os.path.join(self.task_dir, "images", "*")))
         vis_fnames = glob(os.path.join(self.task_dir, "visualizations", "*"))
+        rescon_fnames = glob(os.path.join(self.task_dir, "resultconversions", "*"))
+        imgcon_fnames = glob(os.path.join(self.task_dir, "imageconversions", "*"))
 
         # TEMPORARY:
         #  - Remove pred_ prefix from visualization filenames
@@ -224,6 +248,8 @@ class Task:
             "status": self.status(),
             "image_filenames": [os.path.basename(i) for i in img_fnames],
             "visualization_filenames": [os.path.basename(i) for i in vis_fnames],
+            "resultconversion_filenames":[os.path.basename(i) for i in rescon_fnames],
+            "imageconversion_filenames":[os.path.basename(i) for i in imgcon_fnames],
             "results": results_data,
         }
 

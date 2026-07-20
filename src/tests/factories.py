@@ -58,6 +58,12 @@ class TaskFactory:
                     os.path.join(
                         DATA_DIR, task.id, "visualizations", os.path.basename(i)
                     ),
+                    os.path.join(
+                        DATA_DIR, task.id, "resultconversions", os.path.basename(i)
+                    ),
+                    os.path.join(
+                        DATA_DIR, task.id, "imageconversions", os.path.basename(i)
+                    ),
                 )
 
             pkl_path = os.path.join(
