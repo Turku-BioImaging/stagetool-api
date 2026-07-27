@@ -186,12 +186,12 @@ class Task:
             os.system(f"mkdir -p {self.task_dir}/imageconversions")            
             try:
                 print (f"Generating preview jpeg for the image {image_name_no_ending}")
-                im = Image.open(f"{self.task_dir}/images/{image_name}")
+                im = Image.open(f"{self.task_dir}/images/{image_name}").convert('RGB')
                 im.thumbnail(im.size)
                 im.save(f"{self.task_dir}/imageconversions/{image_name_no_ending}.jpg", "JPEG", quality=100)
 
                 print (f"Generating result jpeg for the image {image_name_no_ending}")
-                pred_im = Image.open(f"{self.task_dir}/visualizations/numbered_pred_{image_name}")
+                pred_im = Image.open(f"{self.task_dir}/visualizations/numbered_pred_{image_name}").convert('RGB')
                 pred_im.thumbnail(pred_im.size)
                 pred_im.save(f"{self.task_dir}/resultconversions/{image_name_no_ending}.jpg", "JPEG", quality=100)
             except Exception as e:
