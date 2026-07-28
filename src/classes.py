@@ -180,8 +180,6 @@ class Task:
             exec_command = f"docker exec {container_name} rm -rf {docker_output_path}{image_name_no_ending_sanitized}"
             process_exec_command = subprocess.Popen(exec_command, shell=True)
 
-            time.sleep(3)
-
             os.system(f"mkdir -p {self.task_dir}/resultconversions")
             os.system(f"mkdir -p {self.task_dir}/imageconversions")            
             try:
