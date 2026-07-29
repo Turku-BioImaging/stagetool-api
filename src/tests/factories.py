@@ -1,13 +1,11 @@
 from werkzeug.datastructures import FileStorage
-from classes import Task, Status, PickleParser
+from classes import Task, Status
 import os
 from dotenv import load_dotenv
 import numpy as np
 from PIL import Image
 from io import BytesIO
 import shutil
-
-# import pickle
 
 load_dotenv()
 
@@ -53,10 +51,24 @@ class TaskFactory:
         if status == Status.COMPLETED.name:
             task_img_paths = os.listdir(os.path.join(DATA_DIR, task.id, "images"))
             for i in task_img_paths:
+                src = os.path.join(DATA_DIR, task.id, "images", os.path.basename(i))
+
                 shutil.copy(
-                    os.path.join(DATA_DIR, task.id, "images", os.path.basename(i)),
+                    src,
                     os.path.join(
                         DATA_DIR, task.id, "visualizations", os.path.basename(i)
+                    ),
+                )
+                shutil.copy(
+                    src,
+                    os.path.join(
+                        DATA_DIR, task.id, "result-conversions", os.path.basename(i)
+                    ),
+                )
+                shutil.copy(
+                    src,
+                    os.path.join(
+                        DATA_DIR, task.id, "image-conversions", os.path.basename(i)
                     ),
                 )
 

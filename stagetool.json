@@ -171,6 +171,102 @@
         }
       }
     },
+    "/result-conversions": {
+      "get": {
+        "summary": "Get converted data",
+        "description": "Get the converted data for a previously submitted task",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "description": "The filename of the converted tiff to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the converted tiff if it exists.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/image-conversions": {
+      "get": {
+        "summary": "Get converted data",
+        "description": "Get the converted image data for a previously submitted task",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "query",
+            "description": "The ID of the task to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "query",
+            "description": "The filename of the image to retrieve",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the image if it exists.",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/results": {
       "get": {
         "summary": "Get results data",
@@ -252,6 +348,12 @@
             "type": "array"
           },
           "visualization_filenames": {
+            "type": "array"
+          },
+          "result_conversion_filenames": {
+            "type": "array"
+          },
+          "image_conversion_filenames": {
             "type": "array"
           },
           "results": {

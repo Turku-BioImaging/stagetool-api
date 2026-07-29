@@ -86,10 +86,48 @@ def get_visualization():
         return send_file(
             io.BytesIO(vis_data), mimetype=mimetypes.guess_type(vis_path)[0]
         )
-
     except TaskNotFoundError or FileNotFoundError:
         return jsonify({"error": "Visualization not found"}), 404
+    
+@app.route("/result-conversions", methods=["GET"])
+def get_conversions():
+    task_id = request.args.get("task_id")
+    filename = request.args.get("filename")
 
+    if not task_id or not filename:
+        abort(400, description="Required query parameters are missing.")
+
+    try:
+        task = Task(id=task_id)
+        rescon_path = os.path.join(DATA_DIR, task.id, "result-conversions", filename)
+        with open(rescon_path, "rb") as vis:
+            vis_data = vis.read()
+        return send_file(
+            io.BytesIO(vis_data), mimetype=mimetypes.guess_type(rescon_path)[0]
+        )
+
+    except TaskNotFoundError or FileNotFoundError:
+        return jsonify({"error": "Conversion not found"}), 404
+
+@app.route("/image-conversions", methods=["GET"])
+def get_imageconversions():
+    task_id = request.args.get("task_id")
+    filename = request.args.get("filename")
+
+    if not task_id or not filename:
+        abort(400, description="Required query parameters are missing.")
+
+    try:
+        task = Task(id=task_id)
+        imgcon_path = os.path.join(DATA_DIR, task.id, "image-conversions", filename)
+        with open(imgcon_path, "rb") as vis:
+            vis_data = vis.read()
+        return send_file(
+            io.BytesIO(vis_data), mimetype=mimetypes.guess_type(imgcon_path)[0]
+        )
+
+    except TaskNotFoundError or FileNotFoundError:
+        return jsonify({"error": "Conversion not found"}), 404
 
 @app.route("/results", methods=["GET"])
 def get_results():

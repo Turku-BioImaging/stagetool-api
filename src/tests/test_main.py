@@ -11,7 +11,7 @@ from jsonschema import validate
 from main import app
 from werkzeug.datastructures import FileStorage
 
-from .factories import TaskFactory
+from factories import TaskFactory
 
 os.environ["ENV"] = "testing"
 env = os.getenv("ENV")
@@ -140,15 +140,4 @@ class TestVisualizations(TestCase):
             assert response.headers["Content-Type"] == "image/png"
 
 
-# class TestResults(TestCase):
-#     def setUp(self) -> None:
-#         self.task = TaskFactory.create_task(num_images=1, status=Status.COMPLETED.name)
-
-#     def tearDown(self) -> None:
-#         self.task.destroy()
-
-#     def test_get_results(self):
-#         with app.test_client() as client:
-#             # task id not provided
-#             response = client.get("/results/csv?task_id=1234")
-#             assert response.status_code == 400
+# @junelsolis TODO: Add new tests to cover the new endpoints `/result-conversions` and `/image-conversions`
