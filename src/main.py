@@ -89,7 +89,7 @@ def get_visualization():
     except TaskNotFoundError or FileNotFoundError:
         return jsonify({"error": "Visualization not found"}), 404
     
-@app.route("/resultconversions", methods=["GET"])
+@app.route("/result-conversions", methods=["GET"])
 def get_conversions():
     task_id = request.args.get("task_id")
     filename = request.args.get("filename")
@@ -99,7 +99,7 @@ def get_conversions():
 
     try:
         task = Task(id=task_id)
-        rescon_path = os.path.join(DATA_DIR, task.id, "resultconversions", filename)
+        rescon_path = os.path.join(DATA_DIR, task.id, "result-conversions", filename)
         with open(rescon_path, "rb") as vis:
             vis_data = vis.read()
         return send_file(
@@ -109,7 +109,7 @@ def get_conversions():
     except TaskNotFoundError or FileNotFoundError:
         return jsonify({"error": "Conversion not found"}), 404
 
-@app.route("/imageconversions", methods=["GET"])
+@app.route("/image-conversions", methods=["GET"])
 def get_imageconversions():
     task_id = request.args.get("task_id")
     filename = request.args.get("filename")
@@ -119,7 +119,7 @@ def get_imageconversions():
 
     try:
         task = Task(id=task_id)
-        imgcon_path = os.path.join(DATA_DIR, task.id, "imageconversions", filename)
+        imgcon_path = os.path.join(DATA_DIR, task.id, "image-conversions", filename)
         with open(imgcon_path, "rb") as vis:
             vis_data = vis.read()
         return send_file(

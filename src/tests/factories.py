@@ -59,10 +59,10 @@ class TaskFactory:
                         DATA_DIR, task.id, "visualizations", os.path.basename(i)
                     ),
                     os.path.join(
-                        DATA_DIR, task.id, "resultconversions", os.path.basename(i)
+                        DATA_DIR, task.id, "result-conversions", os.path.basename(i)
                     ),
                     os.path.join(
-                        DATA_DIR, task.id, "imageconversions", os.path.basename(i)
+                        DATA_DIR, task.id, "image-conversions", os.path.basename(i)
                     ),
                 )
 

@@ -171,7 +171,7 @@
         }
       }
     },
-    "/resultconversions": {
+    "/result-conversions": {
       "get": {
         "summary": "Get converted data",
         "description": "Get the converted data for a previously submitted task",
@@ -219,7 +219,7 @@
         }
       }
     },
-    "/imageconversions": {
+    "/image-conversions": {
       "get": {
         "summary": "Get converted data",
         "description": "Get the converted image data for a previously submitted task",
@@ -350,10 +350,10 @@
           "visualization_filenames": {
             "type": "array"
           },
-          "resultconversion_filenames": {
+          "result_conversion_filenames": {
             "type": "array"
           },
-          "imageconversion_filenames": {
+          "image_conversion_filenames": {
             "type": "array"
           },
           "results": {
