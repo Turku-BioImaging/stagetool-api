@@ -14,6 +14,8 @@ DOCKER_IMAGE_VERSION=0.1.2 (Version of your core container, with trailing :)
 ALLOWED_ORIGINS= (Enter address of UI app for CORS)
 ```
 
+Run unit tests from `src` with `python -m pytest tests/test_main.py`
+
 ## Deploy
 ```
  gunicorn -w 4 -b :6700 --log-level debug main:app
