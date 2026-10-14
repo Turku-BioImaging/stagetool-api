@@ -20,6 +20,4 @@ jobs:
             cd ~/stagetool-api
             git reset --hard HEAD
             git pull
-            cd src
-            kill $(ps aux | grep gunic* | awk '{print $2}')
-            nohup gunicorn -w 4 -b :6700 -t 300 --log-level debug main:app &
+            sudo systemctl restart stagetool-api
